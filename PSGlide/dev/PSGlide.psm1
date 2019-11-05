@@ -43,7 +43,7 @@ class GlideFactory {
         decrypted during REST invocation
     #>
     GlideFactory ([String]$instanceName, [pscredential]$credentials) {
-        $this.baseURL = "https://${instanceName}.service-now.com/api/now"
+        $this.baseURL = "https://${instanceName}.service-now.com/api/now/v2"
         $this.credential = $credentials
         $this.commonParams = @{
             'Accept'        = 'application/json'
@@ -224,7 +224,7 @@ class GlideRecord : GlideObject {
                 # invoke and validate request response
                 $response = Invoke-WebRequest -Uri $queryURL -Method 'GET' -Headers $queryParams -UseBasicParsing
                 if ($response.StatusCode -eq 200 -or $response.StatusDescription -eq 'OK') {
-                    
+
                     # Parse JSON and add to local heap
                     $response.content | ConvertFrom-Json | Select-Object -ExpandProperty 'result' | ForEach-Object {
                         if (
@@ -300,6 +300,11 @@ class GlideRecord : GlideObject {
         $retVal = $null
         try {
             $retVal = $this.data[$this.recordPointer] | Select-Object -ExpandProperty $field
+
+            # further expand if field has a reference link
+            if ($retVal -is [PSCustomObject] -and $retVal.value) {
+                $retVal = $retVal.value
+            }
         }
         catch {
             $retVal = $null
