@@ -125,20 +125,22 @@ class GlideRecord : GlideObject {
     hidden [string]$table
     hidden [String]$encodedQuery
     hidden [Int32]$limit
-    hidden [Array]$fields
+    hidden [System.Collections.ArrayList]$fields
 
     # pagination fields
     hidden [Uint32]$pageSize = 500
 
     # Data fields
     hidden [Int32]$recordPointer
-    hidden [Array]$data
+    hidden [System.Collections.ArrayList]$data
+    hidden [hashtable]$updates
 
     GlideRecord([GlideFactory]$myFactory, [string]$tableName) : base($myFactory) {
         $this.table = $tableName
         $this.limit = 0
-        $this.fields = [Array]::new()
+        $this.fields = [System.Collections.ArrayList]::new()
         $this.recordPointer = -1
+        $this.updates = [hashtable]::new()
     }
 
     <#
@@ -302,6 +304,7 @@ class GlideRecord : GlideObject {
         $newData = $false
         if ($this.recordPointer -lt $this.data.Count - 1) {
             $this.recordPointer++
+            $this.updates = [hashtable]::new()
             $newData = $true
         }
         return $newData
@@ -323,10 +326,17 @@ class GlideRecord : GlideObject {
         .PARAMETER field
         Name of the field to get value from
     #>
-    [String]getValue($field) {
+    [String]getValue([string]$field) {
         $retVal = $null
+        $field = $field.toLower()
         try {
-            $retVal = $this.data[$this.recordPointer] | Select-Object -ExpandProperty $field
+
+            # Check if value is queued for update
+            if ($this.updates.keys -contains $field) {
+                $retVal = $this.updates[$field]
+            } else {
+                $retVal = $this.data[$this.recordPointer] | Select-Object -ExpandProperty $field
+            }
 
             # further expand if field has a reference link
             if ($retVal -is [PSCustomObject] -and $retVal.value) {
@@ -337,6 +347,52 @@ class GlideRecord : GlideObject {
             $retVal = $null
         }
         return $retVal
+    }
+
+    <#
+        .DESCRIPTION
+        Sets the value of a desired field
+        .PARAMETER field
+        Name of field to update
+        .PARAMETER value
+        Value to change the field to
+    #>
+    [void]setValue([string]$field, [string]$value) {
+        $this.updates[$field] = $value
+    }
+
+    <#
+        .DESCRIPTION
+        Requests an update of the current record. Returns true on success, false
+        on failure.
+    #>
+    [boolean]update() {
+        $return = $false
+        $paramList = [System.Collections.ArrayList]::new()
+        if ($this.fields.Count -gt 0) {
+            $paramList.add("sysparm_fields=$($this.fields -join ',')")  | Out-Null
+        }
+
+        # Build request elements
+        $queryURL = "{0}/table/{1}/{2}{3}" -f (
+            "$($this.factory.getURL())",
+            "$($this.table)",
+            "$($this.getValue('sys_id'))",
+            "$($paramList -join '&')"
+        )
+        $global:fooo =  $queryURL
+        $queryParams = $this.factory.getParams();
+        $queryParams.Authorization = $this.factory.getAuthString()
+        $body = $this.updates | ConvertTo-Json
+        try {
+            $response = Invoke-WebRequest -Uri $queryURL -Method 'PATCH' -Headers $queryParams -Body $body -UseBasicParsing
+            if ($response.StatusCode -eq 200 -or $response.StatusDescription -eq 'OK') {
+                $return = $true
+            }
+        } catch {
+            $return = $false
+        }
+        return $return
     }
 
     hidden [void]concatQuery($queryString) {
