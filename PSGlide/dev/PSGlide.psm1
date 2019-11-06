@@ -1,11 +1,18 @@
 #REQUIRES -Version 5.0
 <#
     ServiceNow API interface module
+    Provides a native-feeling set of classes that allow SN devs to use their
+    existing Glide muscle memory to interract withy table API via PowerShell
 
-    Chelsey Ingersoll <cjingers>
-    Lawrence Wetzel <lmwetzel>
+    Chelsey Ingersoll <chelsey.ingersoll@asu.edu>
 
     CHANGELOG
+    11-05-19
+    * Implementation of GlideRecord.update()
+    * Implementation of GlideRecord.setValue(field, value)
+    * Implementation of GlideRecord.get(sys_id) and get(field, value)
+    * minor bug fixes
+
     7-25-19
     * Added setFields method to GlideRecord
     * Added support for pagination with limit constraint
@@ -329,22 +336,26 @@ class GlideRecord : GlideObject {
     [String]getValue([string]$field) {
         $retVal = $null
         $field = $field.toLower()
-        try {
 
-            # Check if value is queued for update
-            if ($this.updates.keys -contains $field) {
-                $retVal = $this.updates[$field]
-            } else {
-                $retVal = $this.data[$this.recordPointer] | Select-Object -ExpandProperty $field
-            }
+        # only perform action if record pointer is on a valid record
+        if ($this.recordPointer -gt -1) {
+            try {
 
-            # further expand if field has a reference link
-            if ($retVal -is [PSCustomObject] -and $retVal.value) {
-                $retVal = $retVal.value
+                # Check if value is queued for update
+                if ($this.updates.keys -contains $field) {
+                    $retVal = $this.updates[$field]
+                } else {
+                    $retVal = $this.data[$this.recordPointer] | Select-Object -ExpandProperty $field
+                }
+
+                # further expand if field has a reference link
+                if ($retVal -is [PSCustomObject] -and $retVal.value) {
+                    $retVal = $retVal.value
+                }
             }
-        }
-        catch {
-            $retVal = $null
+            catch {
+                $retVal = $null
+            }
         }
         return $retVal
     }
@@ -358,7 +369,11 @@ class GlideRecord : GlideObject {
         Value to change the field to
     #>
     [void]setValue([string]$field, [string]$value) {
-        $this.updates[$field] = $value
+
+        # only perform action if record pointer is on a valid record
+        if ($this.recordPointer -gt -1) {
+            $this.updates[$field] = $value
+        }
     }
 
     <#
@@ -368,6 +383,12 @@ class GlideRecord : GlideObject {
     #>
     [boolean]update() {
         $return = $false
+
+        # Abort if invalid record pointer or no updates scheduled
+        if ($this.recordPointer -eq -1 -or $this.updates.count -eq 0) {
+            return $return
+        }
+
         $paramList = [System.Collections.ArrayList]::new()
         if ($this.fields.Count -gt 0) {
             $paramList.add("sysparm_fields=$($this.fields -join ',')")  | Out-Null
