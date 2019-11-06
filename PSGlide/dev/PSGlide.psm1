@@ -194,6 +194,33 @@ class GlideRecord : GlideObject {
         $this.fields = $fieldList
     }
 
+    <#
+        .DESCRIPTION
+        Searches for a record with tyhe provided sys_id
+        Returns true if a record was found, otherwise false
+        .PARAMETER sysId
+        The 32 alphanumeric sys_id string
+    #>
+    [boolean]get([string]$sysId) {
+        return $this.get('sys_id', $sysId)
+    }
+
+    <#
+        .DESCRIPTION
+        Instantly searches for a single record where the specified field matches
+        the associated value.Returns true if a record is found, otherwise false
+        .PARAMETER field
+        The field name to search on
+        .PARAMETER value
+        The value to use in the search
+    #>
+    [boolean]get($field, $value) {
+        $this.setLimit(1)
+        $this.addQuery($field, $value)
+        $this.query()
+        return $this.next()
+    }
+
     [void]query() {
         $result = [System.Collections.ArrayList]::new()
 
