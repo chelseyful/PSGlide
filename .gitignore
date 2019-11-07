@@ -1,0 +1,4 @@
+build/
+Test.xml
+*.nupkg
+.DS_Store

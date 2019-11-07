@@ -1,11 +1,16 @@
 version: 1.0.{build}
 skip_branch_with_pr: true
+branches:
+  only:
+    - master
+    - release
 image:
   - Visual Studio 2017
   - Ubuntu
 install:
   - ps: Install-Module Pester -Force -Scope CurrentUser
-build: off
+build:
+  publish_nuget: true
 test_script:
   - ps: |
       Set-StrictMode -Version 3.0

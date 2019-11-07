@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>PSGlide</id>
+    <version>0.1.0</version>
+    <title>Glide for PowerShell</title>
+    <summary>Native-feeling implementation of ServiceNow Glide APIs</summary>
+    <description>Designed to give ServiceNow integrators and developers a familiar interface to the ServiceNow table API. These interfaces take the form of classes designed to mimic the behavior of their server-side JavaScript equivilants. Ultimately allowing people familliar with the JavaScript APIs an easy onboarding to integrations using PowerShell.</description>
+    <tags>powershell servicenow glide api</tags>
+    <authors>Chelsey Ingersoll</authors>
+    <projectUrl>https://github.com/chelseyful/PSGlide</projectUrl>
+    <licenseUrl>https://www.gnu.org/licenses/gpl-3.0.en.html</licenseUrl>
+  </metadata>
+  <files>
+    <file src="PSGlide\dev\PSGlide.psm1" target="$targetBase$" />
+    <file src="PSGlide\dev\PSGlide.psd1" target="$targetBase$" />
+  </files>
+</package>
