@@ -1,4 +1,5 @@
 # PSGlide - PowerShell interface to NOW API
+[![Build status](https://ci.appveyor.com/api/projects/status/h3s1hbmnj6qvotc5/branch/master?svg=true)](https://ci.appveyor.com/project/chelseyful/psglide/branch/master)
 
 ## Summary
 This module aims to emulate the Server-Side Glide API within PowerShell.
