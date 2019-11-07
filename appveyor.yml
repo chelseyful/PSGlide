@@ -1,4 +1,5 @@
 version: 1.0.{build}
+skip_branch_with_pr: true
 image:
   - Visual Studio 2017
   - Ubuntu
@@ -6,4 +7,7 @@ install:
   - ps: Install-Module Pester -Force -Scope CurrentUser
 build: off
 test_script:
-  - ps: Invoke-Pester -EnableExit
+  - ps: |
+      Set-StrictMode -Version 3.0
+      Invoke-Pester -EnableExit -OutputFile Tests.xml -OutputFormat NUnitXml
+      [System.Net.WebClient]::new().UploadFile("https://ci.appveyor.com/api/testresults/nunit/${env:APPVEYOR_JOB_ID}", (Join-Path $PWD 'Tests.xml'))

@@ -1,4 +1,6 @@
 #REQUIRES -Version 5.0
+Set-StrictMode -Version 3.0
+
 <#
     ServiceNow API interface module
     Provides a native-feeling set of classes that allow SN devs to use their
@@ -239,12 +241,13 @@ class GlideRecord : GlideObject {
         }
 
         if ($this.fields.Count -gt 0) {
-            $paramList.add("sysparm_fields=$($this.fields -join ',')")  | Out-Null
+            $paramList.add("sysparm_fields=$($this.fields -join ',')") | Out-Null
         }
 
         if ($this.limit -gt 0 -and $this.limit -lt $this.pageSize) {
             $paramList.add("sysparm_limit=$($this.limit)") | Out-Null
-        } else {
+        }
+        else {
             $paramList.add("sysparm_limit=$($this.pageSize)") | Out-Null
         }
 
@@ -283,13 +286,15 @@ class GlideRecord : GlideObject {
                         $queryURL = $null
                         $links | Foreach-Object {
                             if ($_.endsWith(';rel="next"')) {
-                                $queryURL = ($_ -split ';')[0] -replace '<|>',''
+                                $queryURL = ($_ -split ';')[0] -replace '<|>', ''
                             }
                         }
-                    } else {
+                    }
+                    else {
                         $queryURL = $null
                     }
-                } else {
+                }
+                else {
                     $queryURL = $null
                 }
             }
@@ -344,7 +349,8 @@ class GlideRecord : GlideObject {
                 # Check if value is queued for update
                 if ($this.updates.keys -contains $field) {
                     $retVal = $this.updates[$field]
-                } else {
+                }
+                else {
                     $retVal = $this.data[$this.recordPointer] | Select-Object -ExpandProperty $field
                 }
 
@@ -391,7 +397,7 @@ class GlideRecord : GlideObject {
 
         $paramList = [System.Collections.ArrayList]::new()
         if ($this.fields.Count -gt 0) {
-            $paramList.add("sysparm_fields=$($this.fields -join ',')")  | Out-Null
+            $paramList.add("sysparm_fields=$($this.fields -join ',')") | Out-Null
         }
 
         # Build request elements
@@ -401,7 +407,7 @@ class GlideRecord : GlideObject {
             "$($this.getValue('sys_id'))",
             "$($paramList -join '&')"
         )
-        $global:fooo =  $queryURL
+        $global:fooo = $queryURL
         $queryParams = $this.factory.getParams();
         $queryParams.Authorization = $this.factory.getAuthString()
         $body = $this.updates | ConvertTo-Json
@@ -410,7 +416,8 @@ class GlideRecord : GlideObject {
             if ($response.StatusCode -eq 200 -or $response.StatusDescription -eq 'OK') {
                 $return = $true
             }
-        } catch {
+        }
+        catch {
             $return = $false
         }
         return $return

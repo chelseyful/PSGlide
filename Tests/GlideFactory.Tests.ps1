@@ -1,4 +1,5 @@
 using module ..\PSGlide\dev\PSGlide.psm1
+Set-StrictMode -Version 3.0
 Describe "GlideFactory" {
 
     $instance = "fakeinstancenotreal"
