@@ -9,12 +9,10 @@ image:
   - Ubuntu
 install:
   - ps: Install-Module Pester -Force -Scope CurrentUser
-build:
-  publish_nuget: true
 build_script:
   - ps: |
-      $baseDir = $PSScriptRoot
-      nuget pack "${baseDir}\PSGlide.nuspec"
+      $spec = Get-ChildItem -File "PSGlide.nuspec" | Select-Object -First 1 -ExpandProperty 'FullName'
+      nuget pack "${spec}"
       $package = Get-ChildItem -File "*.nupkg" | Select-Object -First 1 -ExpandProperty 'FullName'
       appveyor PushArtifact "${package}"
 test_script:
